@@ -22,7 +22,12 @@
 #include <string.h>
 #include <math.h>
 #include "SDL.h"
+
+#ifdef __MACOSX__
 #include "SDL_Opengl.h"
+#else
+#include "SDL_opengl.h"
+#endif
 
 #include "fontstash.h"
 
