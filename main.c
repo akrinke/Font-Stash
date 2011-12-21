@@ -36,8 +36,7 @@ int main(int argc, char *argv[])
 	int done;
 	SDL_Event event;
 	SDL_Surface* screen;
-	const SDL_VideoInfo* vi;
-	int width,height;
+	int width, height;
 	struct sth_stash* stash = 0;
 	float sx,sy,dx,dy,lh;
 
@@ -54,10 +53,9 @@ int main(int argc, char *argv[])
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	
-	vi = SDL_GetVideoInfo();
-	width = vi->current_w - 20;
-	height = vi->current_h - 80;
+
+	width = 800;
+	height = 600;	
 	screen = SDL_SetVideoMode(width, height, 0, SDL_OPENGL);
 	if (!screen)
 	{
