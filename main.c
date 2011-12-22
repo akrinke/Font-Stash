@@ -40,6 +40,8 @@ int main(int argc, char *argv[])
 	struct sth_stash* stash = 0;
 	float sx,sy,dx,dy,lh;
 
+	int droidRegular, droidItalic, droidBold, droidJapanese;
+
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 	{
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
@@ -65,29 +67,28 @@ int main(int argc, char *argv[])
 	
 	SDL_WM_SetCaption("FontStash Demo", 0);
 
-//	fnt = sth_create("DroidSansJapanese.ttf", 512,512);
 	stash = sth_create(512,512);
 	if (!stash)
 	{
 		printf("Could not create stash.\n");
 		return -1;
 	}
-	if (!sth_add_font(stash,0,"DroidSerif-Regular.ttf"))
+	if (!(droidRegular = sth_add_font(stash,"DroidSerif-Regular.ttf")))
 	{
 		printf("Could not add font.\n");
 		return -1;
 	}
-	if (!sth_add_font(stash,1,"DroidSerif-Italic.ttf"))
+	if (!(droidItalic = sth_add_font(stash,"DroidSerif-Italic.ttf")))
 	{
 		printf("Could not add font.\n");
 		return -1;
 	}	
-	if (!sth_add_font(stash,2,"DroidSerif-Bold.ttf"))
+	if (!(droidBold = sth_add_font(stash,"DroidSerif-Bold.ttf")))
 	{
 		printf("Could not add font.\n");
 		return -1;
 	}	
-	if (!sth_add_font(stash,3,"DroidSansJapanese.ttf"))
+	if (!(droidJapanese = sth_add_font(stash,"DroidSansJapanese.ttf")))
 	{
 		printf("Could not add font.\n");
 		return -1;
@@ -138,26 +139,26 @@ int main(int argc, char *argv[])
 		sth_begin_draw(stash);
 		
 		dx = sx; dy = sy;
-		sth_draw_text(stash, 0,24.0f, dx,dy,"The quick ",&dx);
-		sth_draw_text(stash, 1,48.0f, dx,dy,"brown ",&dx);
-		sth_draw_text(stash, 0,24.0f, dx,dy,"fox ",&dx);
-		sth_vmetrics(stash, 1,24, NULL,NULL,&lh);
+		sth_draw_text(stash, droidRegular, 24.0f, dx, dy, "The quick ", &dx);
+		sth_draw_text(stash, droidItalic, 48.0f, dx, dy, "brown ", &dx);
+		sth_draw_text(stash, droidRegular, 24.0f, dx, dy, "fox ", &dx);
+		sth_vmetrics(stash, droidItalic, 24, NULL, NULL, &lh);
 		dx = sx;
 		dy -= lh*1.2f;
-		sth_draw_text(stash, 1,24.0f, dx,dy,"jumps over ",&dx);
-		sth_draw_text(stash, 2,24.0f, dx,dy,"the lazy ",&dx);
-		sth_draw_text(stash, 0,24.0f, dx,dy,"dog.",&dx);
+		sth_draw_text(stash, droidItalic, 24.0f, dx, dy, "jumps over ", &dx);
+		sth_draw_text(stash, droidBold, 24.0f, dx, dy, "the lazy ", &dx);
+		sth_draw_text(stash, droidRegular, 24.0f, dx, dy, "dog.", &dx);
 		dx = sx;
 		dy -= lh*1.2f;
-		sth_draw_text(stash, 0,12.0f, dx,dy,"Now is the time for all good men to come to the aid of the party.",&dx);
-		sth_vmetrics(stash, 1,12, NULL,NULL,&lh);
+		sth_draw_text(stash, droidRegular, 12.0f, dx, dy, "Now is the time for all good men to come to the aid of the party.", &dx);
+		sth_vmetrics(stash, droidItalic, 12, NULL, NULL, &lh);
 		dx = sx;
 		dy -= lh*1.2f*2;
-		sth_draw_text(stash, 1,18.0f, dx,dy,"Ég get etið gler án þess að meiða mig.",&dx);
-		sth_vmetrics(stash, 1,18, NULL,NULL,&lh);
+		sth_draw_text(stash, droidItalic, 18.0f, dx, dy, "Ég get etið gler án þess að meiða mig.", &dx);
+		sth_vmetrics(stash, droidItalic, 18, NULL, NULL, &lh);
 		dx = sx;
 		dy -= lh*1.2f;
-		sth_draw_text(stash, 3,18.0f, dx,dy,"私はガラスを食べられます。それは私を傷つけません。",&dx);
+		sth_draw_text(stash, droidJapanese, 18.0f, dx, dy, "私はガラスを食べられます。それは私を傷つけません。", &dx);
 
 		sth_end_draw(stash);
 		

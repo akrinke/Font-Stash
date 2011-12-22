@@ -22,7 +22,7 @@
 
 struct sth_stash* sth_create(int cachew, int cacheh);
 
-int sth_add_font(struct sth_stash*, int idx, const char* path);
+int sth_add_font(struct sth_stash*, const char* path);
 
 void sth_draw_text(struct sth_stash* stash,
 				   int idx, float size,

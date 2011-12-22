@@ -34,7 +34,6 @@
 
 #define HASH_LUT_SIZE 256
 #define MAX_ROWS 128
-#define MAX_FONTS 4
 #define VERT_COUNT (6*128)
 #define VERT_STRIDE (sizeof(float)*4)
 
@@ -72,6 +71,7 @@ struct sth_glyph
 
 struct sth_font
 {
+	int idx;
 	stbtt_fontinfo font;
 	unsigned char* data;
 	int datasize;
@@ -81,6 +81,7 @@ struct sth_font
 	float ascender;
 	float descender;
 	float lineh;
+	struct sth_font* next;
 };
 
 struct sth_stash
@@ -90,7 +91,7 @@ struct sth_stash
 	GLuint tex;
 	struct sth_row rows[MAX_ROWS];
 	int nrows;
-	struct sth_font fonts[MAX_FONTS];
+	struct sth_font* fonts;
 	float verts[4*VERT_COUNT];
 	int nverts;
 	int drawing;
@@ -161,21 +162,17 @@ error:
 	return NULL;
 }
 
-int sth_add_font(struct sth_stash* stash, int idx, const char* path)
+int sth_add_font(struct sth_stash* stash, const char* path)
 {
+	static int idx = 1;
 	FILE* fp = 0;
 	int i, ascent, descent, fh, lineGap;
 	struct sth_font* fnt;
-	
-	if (idx < 0 || idx >= MAX_FONTS) return 0;
-	
-	fnt = &stash->fonts[idx];
-	if (fnt->data)
-		free(fnt->data);
-	if (fnt->glyphs)
-		free(fnt->glyphs);
+
+	fnt = (struct sth_font*)malloc(sizeof(struct sth_font));
+	if (fnt == NULL) goto error;
 	memset(fnt,0,sizeof(struct sth_font));
-	
+
 	// Init hash lookup.
 	for (i = 0; i < HASH_LUT_SIZE; ++i) fnt->lut[i] = -1;
 	
@@ -201,13 +198,19 @@ int sth_add_font(struct sth_stash* stash, int idx, const char* path)
 	fnt->ascender = (float)ascent / (float)fh;
 	fnt->descender = (float)descent / (float)fh;
 	fnt->lineh = (float)(fh + lineGap) / (float)fh;
+
+	fnt->idx = idx;
+	fnt->next = stash->fonts;
+	stash->fonts = fnt;
 	
-	return 1;
+	return idx++;
 	
 error:
-	if (fnt->data) free(fnt->data);
-	if (fnt->glyphs) free(fnt->glyphs);
-	memset(fnt,0,sizeof(struct sth_font));
+	if (fnt) {
+		if (fnt->data) free(fnt->data);
+		if (fnt->glyphs) free(fnt->glyphs);
+		free(fnt);
+	}
 	if (fp) fclose(fp);
 	return 0;
 }
@@ -411,8 +414,9 @@ void sth_draw_text(struct sth_stash* stash,
 	
 	if (stash == NULL) return;
 	if (!stash->tex) return;
-	if (idx < 0 || idx >= MAX_FONTS) return;
-	fnt = &stash->fonts[idx];
+	fnt = stash->fonts;
+	while(fnt != NULL && fnt->idx != idx) fnt = fnt->next;
+	if (fnt == NULL) return;
 	if (!fnt->data) return;
 	
 	for (; *s; ++s)
@@ -454,8 +458,9 @@ void sth_dim_text(struct sth_stash* stash,
 	
 	if (stash == NULL) return;
 	if (!stash->tex) return;
-	if (idx < 0 || idx >= MAX_FONTS) return;
-	fnt = &stash->fonts[idx];
+	fnt = stash->fonts;
+	while(fnt != NULL && fnt->idx != idx) fnt = fnt->next;
+	if (fnt == NULL) return;
 	if (!fnt->data) return;
 	
 	*minx = *maxx = x;
@@ -476,29 +481,40 @@ void sth_vmetrics(struct sth_stash* stash,
 				  int idx, float size,
 				  float* ascender, float* descender, float* lineh)
 {
+	struct sth_font* fnt;
+
 	if (stash == NULL) return;
 	if (!stash->tex) return;
-	if (idx < 0 || idx >= MAX_FONTS) return;
-	if (!stash->fonts[idx].data) return;
+	fnt = stash->fonts;
+	while(fnt != NULL && fnt->idx != idx) fnt = fnt->next;
+	if (fnt == NULL) return;
+	if (!fnt->data) return;
 	if (ascender)
-		*ascender = stash->fonts[idx].ascender*size;
+		*ascender = fnt->ascender*size;
 	if (descender)
-		*descender = stash->fonts[idx].descender*size;
+		*descender = fnt->descender*size;
 	if (lineh)
-		*lineh = stash->fonts[idx].lineh*size;
+		*lineh = fnt->lineh*size;
 }
 
 void sth_delete(struct sth_stash* stash)
 {
 	int i;
+	struct sth_font* fnt;
+	struct sth_font* curfnt;
+
 	if (!stash) return;
 	if (stash->tex) glDeleteTextures(1,&stash->tex);
-	for (i = 0; i < MAX_FONTS; ++i)
-	{
-		if (stash->fonts[i].glyphs)
-			free(stash->fonts[i].glyphs);
-		if (stash->fonts[i].data)
-			free(stash->fonts[i].data);
+
+	fnt = stash->fonts;
+	while(fnt != NULL) {
+		curfnt = fnt;
+		fnt = fnt->next;
+		if (curfnt->glyphs)
+			free(curfnt->glyphs);
+		if (curfnt->data)
+			free(curfnt->data);
+		free(curfnt);
 	}
 	free(stash);
 }
