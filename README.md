@@ -4,6 +4,14 @@ Font Stash enables easy string rendering in OpenGL applications. It supports tru
 
 Font Stash was originally created and [published](http://digestingduck.blogspot.com/2009/08/font-stash.html) by [Mikko Mononen](http://digestingduck.blogspot.com).
 
+## Major changes to the original version
+
+* Added ability to load an arbitrary number of fonts (not just four).
+
+## Screenshot
+
+![Screenshot](https://github.com/akrinke/Font-Stash/wiki/screenshot.png)
+
 ## License
 
 The files fontstash.c, fontstash.h and main.c are licensed unter the zlib license:
