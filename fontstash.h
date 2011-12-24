@@ -24,6 +24,9 @@ struct sth_stash* sth_create(int cachew, int cacheh);
 
 int sth_add_font(struct sth_stash*, const char* path);
 
+void sth_begin_draw(struct sth_stash* stash);
+void sth_end_draw(struct sth_stash* stash);
+
 void sth_draw_text(struct sth_stash* stash,
 				   int idx, float size,
 				   float x, float y, const char* string, float* dx);
