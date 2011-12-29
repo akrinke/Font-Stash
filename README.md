@@ -12,11 +12,35 @@ Font Stash was originally created and [published](http://digestingduck.blogspot.
 ## Road map
 
 * Truetype font loading from memory
-* Freetype2 support
+* Freetype2 support (for glyph outlines)
+* Bitmap font support
 
 ## Screenshot
 
 ![Screenshot](https://github.com/akrinke/Font-Stash/wiki/screenshot.png)
+
+## Usage
+
+```c
+#include "fontstash.h"
+
+...
+/* create a font stash with a maximum texture size of 512 x 512 */
+struct sth_stash* stash = sth_create(512, 512);
+/* load truetype font */
+int droid = sth_add_font(stash, "DroidSerif-Regular.ttf");
+/* position of the text */
+float x = 10, y = 10;
+...
+/* draw text during your OpenGL render loop */
+sth_begin_draw(stash);
+/* position: (x, y); font size: 24 */
+sth_draw_text(stash, droid, 24.0f, x, y, "Hello world!", &x);
+/* now, the float x contains the x position of the next char */
+sth_end_draw(stash);
+... 
+
+```
 
 ## License
 
