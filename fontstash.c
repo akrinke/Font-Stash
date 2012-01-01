@@ -260,6 +260,10 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 	stbtt_GetGlyphBitmapBox(&fnt->font, g, scale,scale, &x0,&y0,&x1,&y1);
 	gw = x1-x0;
 	gh = y1-y0;
+	
+    // Check if glyph is larger than maximum texture size
+	if (gw >= stash->tw || gh >= stash->th)
+		return 0;
 
 
 	// Find texture and row where the glyph can be fit.
