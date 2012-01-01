@@ -38,6 +38,10 @@ int main(int argc, char *argv[])
 	SDL_Surface* screen;
 	int width, height;
 	struct sth_stash* stash = 0;
+	FILE* fp = 0;
+	int datasize;
+	unsigned char* data;
+
 	float sx,sy,dx,dy,lh;
 
 	int droidRegular, droidItalic, droidBold, droidJapanese;
@@ -61,7 +65,7 @@ int main(int argc, char *argv[])
 	screen = SDL_SetVideoMode(width, height, 0, SDL_OPENGL);
 	if (!screen)
 	{
-		printf("Could not initialise SDL opengl\n");
+		fprintf(stderr, "Could not initialise SDL opengl\n");
 		return -1;
 	}
 	
@@ -70,29 +74,32 @@ int main(int argc, char *argv[])
 	stash = sth_create(512,512);
 	if (!stash)
 	{
-		printf("Could not create stash.\n");
+		fprintf(stderr, "Could not create stash.\n");
 		return -1;
 	}
-	if (!(droidRegular = sth_add_font(stash,"DroidSerif-Regular.ttf")))
-	{
-		printf("Could not add font.\n");
-		return -1;
-	}
+
+	// Load the first font from memory.
+	fp = fopen("DroidSerif-Regular.ttf", "rb");
+	if (!fp) goto error_add_font;
+	fseek(fp, 0, SEEK_END);
+	datasize = (int)ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	data = (unsigned char*)malloc(datasize);
+	if (data == NULL) goto error_add_font;
+	fread(data, 1, datasize, fp);
+	fclose(fp);
+	fp = 0;
+	
+	if (!(droidRegular = sth_add_font_from_memory(stash, data, datasize)))
+		goto error_add_font;
+
+	// Load the remaining fonts directly.
 	if (!(droidItalic = sth_add_font(stash,"DroidSerif-Italic.ttf")))
-	{
-		printf("Could not add font.\n");
-		return -1;
-	}	
+		goto error_add_font;
 	if (!(droidBold = sth_add_font(stash,"DroidSerif-Bold.ttf")))
-	{
-		printf("Could not add font.\n");
-		return -1;
-	}	
+		goto error_add_font;
 	if (!(droidJapanese = sth_add_font(stash,"DroidSansJapanese.ttf")))
-	{
-		printf("Could not add font.\n");
-		return -1;
-	}	
+		goto error_add_font;
 	
 	done = 0;
 	while (!done)
@@ -166,6 +173,12 @@ int main(int argc, char *argv[])
 		SDL_GL_SwapBuffers();
 	}
 	
+	sth_delete(stash);
+	free(data);
 	SDL_Quit();
 	return 0;
+
+error_add_font:
+	fprintf(stderr, "Could not add font.\n");
+	return -1;
 }

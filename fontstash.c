@@ -143,8 +143,8 @@ static unsigned int decutf8(unsigned int* state, unsigned int* codep, unsigned i
 
 struct sth_stash* sth_create(int cachew, int cacheh)
 {
-	struct sth_stash* stash;
-	struct sth_texture* texture;
+	struct sth_stash* stash = NULL;
+	struct sth_texture* texture = NULL;
 
 	// Allocate memory for the font stash.
 	stash = (struct sth_stash*)malloc(sizeof(struct sth_stash));
@@ -180,10 +180,37 @@ error:
 
 int sth_add_font(struct sth_stash* stash, const char* path)
 {
-	static int idx = 1;
 	FILE* fp = 0;
+	int datasize;
+	unsigned char* data = NULL;
+	
+	// Read in the font data.
+	fp = fopen(path, "rb");
+	if (!fp) goto error;
+	fseek(fp,0,SEEK_END);
+	datasize = (int)ftell(fp);
+	fseek(fp,0,SEEK_SET);
+	data = (unsigned char*)malloc(datasize);
+	if (data == NULL) goto error;
+	fread(data, 1, datasize, fp);
+	// The data block needs to be freed, so it is marked.
+	datasize *= -1;
+	fclose(fp);
+	fp = 0;
+	
+	return sth_add_font_from_memory(stash, data, datasize);
+	
+error:
+	if (data) free(data);
+	if (fp) fclose(fp);
+	return 0;
+}
+
+int sth_add_font_from_memory(struct sth_stash* stash, unsigned char* buffer, int size)
+{
+	static int idx = 1;
 	int i, ascent, descent, fh, lineGap;
-	struct sth_font* fnt;
+	struct sth_font* fnt = NULL;
 
 	fnt = (struct sth_font*)malloc(sizeof(struct sth_font));
 	if (fnt == NULL) goto error;
@@ -191,19 +218,10 @@ int sth_add_font(struct sth_stash* stash, const char* path)
 
 	// Init hash lookup.
 	for (i = 0; i < HASH_LUT_SIZE; ++i) fnt->lut[i] = -1;
-	
-	// Read in the font data.
-	fp = fopen(path, "rb");
-	if (!fp) goto error;
-	fseek(fp,0,SEEK_END);
-	fnt->datasize = (int)ftell(fp);
-	fseek(fp,0,SEEK_SET);
-	fnt->data = (unsigned char*)malloc(fnt->datasize);
-	if (fnt->data == NULL) goto error;
-	fread(fnt->data, 1, fnt->datasize, fp);
-	fclose(fp);
-	fp = 0;
-	
+
+	fnt->datasize = size;
+	fnt->data = buffer;
+
 	// Init stb_truetype
 	if (!stbtt_InitFont(&fnt->font, fnt->data, 0)) goto error;
 	
@@ -220,14 +238,13 @@ int sth_add_font(struct sth_stash* stash, const char* path)
 	stash->fonts = fnt;
 	
 	return idx++;
-	
+
 error:
 	if (fnt) {
-		if (fnt->data) free(fnt->data);
+		if (fnt->datasize < 0 && fnt->data) free(fnt->data);
 		if (fnt->glyphs) free(fnt->glyphs);
 		free(fnt);
 	}
-	if (fp) fclose(fp);
 	return 0;
 }
 
@@ -235,13 +252,13 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 {
 	int i,g,advance,lsb,x0,y0,x1,y1,gw,gh;
 	float scale;
-	struct sth_texture* texture;
-	struct sth_glyph* glyph;
-	unsigned char* bmp;
+	struct sth_texture* texture = NULL;
+	struct sth_glyph* glyph = NULL;
+	unsigned char* bmp = NULL;
 	unsigned int h;
 	float size = isize/10.0f;
 	int rh;
-	struct sth_row* br;
+	struct sth_row* br = NULL;
 
 	// Find code point and size.
 	h = hashint(codepoint) & (HASH_LUT_SIZE-1);
@@ -401,7 +418,7 @@ static float* setv(float* v, float x, float y, float s, float t)
 static void flush_draw(struct sth_stash* stash)
 {
 	struct sth_texture* texture = stash->textures;
-	while(texture)
+	while (texture)
 	{
 		if (texture->nverts > 0)
 		{			
@@ -463,13 +480,13 @@ void sth_draw_text(struct sth_stash* stash,
 				   const char* s, float* dx)
 {
 	unsigned int codepoint;
-	struct sth_glyph* glyph;
-	struct sth_texture* texture;
+	struct sth_glyph* glyph = NULL;
+	struct sth_texture* texture = NULL;
 	unsigned int state = 0;
 	struct sth_quad q;
 	short isize = (short)(size*10.0f);
 	float* v;
-	struct sth_font* fnt;
+	struct sth_font* fnt = NULL;
 	
 	if (stash == NULL) return;
 	if (!stash->textures) return;
@@ -511,11 +528,11 @@ void sth_dim_text(struct sth_stash* stash,
 				  float* minx, float* miny, float* maxx, float* maxy)
 {
 	unsigned int codepoint;
-	struct sth_glyph* glyph;
+	struct sth_glyph* glyph = NULL;
 	unsigned int state = 0;
 	struct sth_quad q;
 	short isize = (short)(size*10.0f);
-	struct sth_font* fnt;
+	struct sth_font* fnt = NULL;
 	float x = 0, y = 0;
 	
 	if (stash == NULL) return;
@@ -545,7 +562,7 @@ void sth_vmetrics(struct sth_stash* stash,
 				  int idx, float size,
 				  float* ascender, float* descender, float* lineh)
 {
-	struct sth_font* fnt;
+	struct sth_font* fnt = NULL;
 
 	if (stash == NULL) return;
 	if (!stash->textures || !stash->textures->id) return;
@@ -563,10 +580,10 @@ void sth_vmetrics(struct sth_stash* stash,
 
 void sth_delete(struct sth_stash* stash)
 {
-	struct sth_texture* tex;
-	struct sth_texture* curtex;
-	struct sth_font* fnt;
-	struct sth_font* curfnt;
+	struct sth_texture* tex = NULL;
+	struct sth_texture* curtex = NULL;
+	struct sth_font* fnt = NULL;
+	struct sth_font* curfnt = NULL;
 
 	if (!stash) return;
 
@@ -585,7 +602,7 @@ void sth_delete(struct sth_stash* stash)
 		fnt = fnt->next;
 		if (curfnt->glyphs)
 			free(curfnt->glyphs);
-		if (curfnt->data)
+		if (curfnt->datasize < 0 && curfnt->data)
 			free(curfnt->data);
 		free(curfnt);
 	}

@@ -23,6 +23,7 @@
 struct sth_stash* sth_create(int cachew, int cacheh);
 
 int sth_add_font(struct sth_stash*, const char* path);
+int sth_add_font_from_memory(struct sth_stash*, unsigned char* buffer, int size);
 
 void sth_begin_draw(struct sth_stash* stash);
 void sth_end_draw(struct sth_stash* stash);
