@@ -6,12 +6,12 @@ Font Stash was originally created and [published](http://digestingduck.blogspot.
 
 ## Major changes to the original version
 
+* Truetype font loading from memory
 * Added ability to load an arbitrary number of fonts (not just four)
 * Use multiple OpenGL textures for glyph caching (not just one)
 
 ## Road map
 
-* Truetype font loading from memory
 * Freetype2 support (for glyph outlines)
 * Bitmap font support
 
