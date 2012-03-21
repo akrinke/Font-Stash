@@ -22,6 +22,7 @@
 #include <string.h>
 #include <math.h>
 #include "SDL.h"
+#include "SDL_image.h"
 
 #ifdef __MACOSX__
 #include "SDL_Opengl.h"
@@ -41,16 +42,18 @@ int main(int argc, char *argv[])
 	FILE* fp = 0;
 	int datasize;
 	unsigned char* data;
-
 	float sx,sy,dx,dy,lh;
-
-	int droidRegular, droidItalic, droidBold, droidJapanese;
+	int droidRegular, droidItalic, droidBold, droidJapanese, dejavu;
+	SDL_Surface* surface;
+	GLuint texture;
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 	{
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
 		return -1;
 	}
+
+
 
 	// Init OpenGL
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -78,7 +81,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	// Load the first font from memory.
+	// Load the first truetype font from memory (just because we can).
 	fp = fopen("DroidSerif-Regular.ttf", "rb");
 	if (!fp) goto error_add_font;
 	fseek(fp, 0, SEEK_END);
@@ -90,16 +93,47 @@ int main(int argc, char *argv[])
 	fclose(fp);
 	fp = 0;
 	
-	if (!(droidRegular = sth_add_font_from_memory(stash, data, datasize)))
+	if (!(droidRegular = sth_add_font_from_memory(stash, data)))
 		goto error_add_font;
 
-	// Load the remaining fonts directly.
+	// Load the remaining truetype fonts directly.
 	if (!(droidItalic = sth_add_font(stash,"DroidSerif-Italic.ttf")))
 		goto error_add_font;
 	if (!(droidBold = sth_add_font(stash,"DroidSerif-Bold.ttf")))
 		goto error_add_font;
 	if (!(droidJapanese = sth_add_font(stash,"DroidSansJapanese.ttf")))
 		goto error_add_font;
+
+	// Load a bitmap font
+	surface = IMG_Load("dejavu-sans_0.png");
+	if (surface == NULL)
+	{
+		fprintf(stderr, "%s.\n", IMG_GetError());
+		return -1;
+	}
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	if (SDL_MUSTLOCK(surface)) SDL_LockSurface(surface);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA8, surface->w, surface->h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, surface->pixels);
+	if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
+	SDL_FreeSurface(surface);
+	dejavu = sth_add_bitmap_font(stash, 17, -4, 2);
+	sth_add_glyph(stash, dejavu, texture, "T", 18, 14, 363, 331, 10, 11, 0,  3, 10);
+	sth_add_glyph(stash, dejavu, texture, "h", 18, 14, 225, 382,  8, 11, 1,  3, 10);
+	sth_add_glyph(stash, dejavu, texture, "i", 18, 14, 478, 377,  2, 11, 1,  3,  4);
+	sth_add_glyph(stash, dejavu, texture, "s", 18, 14, 199, 455,  7,  8, 1,  6,  9);
+	sth_add_glyph(stash, dejavu, texture, " ", 18, 14,  66, 185,  1,  1, 0, 14,  5);
+	sth_add_glyph(stash, dejavu, texture, "a", 18, 14,  18, 459,  8,  8, 1,  6, 10);
+	sth_add_glyph(stash, dejavu, texture, "b", 18, 14, 198, 383,  8, 11, 1,  3, 10);
+	sth_add_glyph(stash, dejavu, texture, "t", 18, 14, 436, 377,  5, 11, 1,  3,  6);
+	sth_add_glyph(stash, dejavu, texture, "m", 18, 14, 494, 429, 12,  8, 2,  6, 16);
+	sth_add_glyph(stash, dejavu, texture, "p", 18, 14, 436, 353,  8, 11, 1,  6, 10);
+	sth_add_glyph(stash, dejavu, texture, "f", 18, 14, 442, 377,  5, 11, 1,  3,  7);
+	sth_add_glyph(stash, dejavu, texture, "o", 18, 14, 483, 438,  8,  8, 1,  6, 10);
+	sth_add_glyph(stash, dejavu, texture, "n", 18, 14,   0, 459,  8,  8, 1,  6, 10);
+	sth_add_glyph(stash, dejavu, texture, ".", 18, 14, 285, 476,  2,  3, 1, 11,  6);
 	
 	done = 0;
 	while (!done)
@@ -166,6 +200,9 @@ int main(int argc, char *argv[])
 		dx = sx;
 		dy -= lh*1.2f;
 		sth_draw_text(stash, droidJapanese, 18.0f, dx, dy, "私はガラスを食べられます。それは私を傷つけません。", &dx);
+		dx = sx;
+		dy -= lh*1.2f*2;
+		sth_draw_text(stash, dejavu, 18.0f, dx, dy, "This is a bitmap font.", &dx);
 
 		sth_end_draw(stash);
 		
