@@ -42,6 +42,10 @@ sth_end_draw(stash);
 
 ```
 
+## Bitmap fonts
+
+Bitmap fonts can be generated using the [AngelCode Bitmap Font Generator](http://www.angelcode.com/products/bmfont/). It's a Windows program that runs under Linux using Wine. This program generates one or more image files and a text file (*.fnt) containing the bounding box coordinates of all individual glyphs. These coordinates are used to reference the glyphs using Font Stash.
+
 ## License
 
 The files fontstash.c, fontstash.h and main.c are licensed unter the zlib license:
