@@ -20,6 +20,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h> /* @rlyeh: floorf() */
+
+#include <GL/glew.h>  /* @rlyeh: before including GL. doesnt hurt and makes life better */
 
 #ifdef __MACOSX__
 #include <OpenGL/gl.h>
@@ -27,9 +30,7 @@
 #include <GL/gl.h>
 #endif
 
-#define STB_TRUETYPE_IMPLEMENTATION
-#define STBTT_malloc(x,u)    malloc(x)
-#define STBTT_free(x,u)      free(x)
+/* @rlyeh: removed STB_TRUETYPE_IMPLENTATION. We link it externally */
 #include "stb_truetype.h"
 
 #define HASH_LUT_SIZE 256
@@ -331,7 +332,7 @@ void sth_add_glyph(struct sth_stash* stash,
 
 	// Alloc space for new glyph.
 	fnt->nglyphs++;
-	fnt->glyphs = realloc(fnt->glyphs, fnt->nglyphs*sizeof(struct sth_glyph));
+	fnt->glyphs = (struct sth_glyph *)realloc(fnt->glyphs, fnt->nglyphs*sizeof(struct sth_glyph)); /* @rlyeh: explicit cast needed in C++ */
 	if (!fnt->glyphs) return;
 
 	// Init glyph.
@@ -384,6 +385,7 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 	// For truetype fonts: create this glyph.
 	scale = stbtt_ScaleForPixelHeight(&fnt->font, size);
 	g = stbtt_FindGlyphIndex(&fnt->font, codepoint);
+	if(!g) return 0; /* @rlyeh: glyph not found, ie, arab chars */
 	stbtt_GetGlyphHMetrics(&fnt->font, g, &advance, &lsb);
 	stbtt_GetGlyphBitmapBox(&fnt->font, g, scale,scale, &x0,&y0,&x1,&y1);
 	gw = x1-x0;
@@ -449,7 +451,7 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 	
 	// Alloc space for new glyph.
 	fnt->nglyphs++;
-	fnt->glyphs = realloc(fnt->glyphs, fnt->nglyphs*sizeof(struct sth_glyph));
+	fnt->glyphs = (struct sth_glyph *)realloc(fnt->glyphs, fnt->nglyphs*sizeof(struct sth_glyph)); /* @rlyeh: explicit cast needed in C++ */
 	if (!fnt->glyphs) return 0;
 
 	// Init glyph.
@@ -648,7 +650,9 @@ void sth_dim_text(struct sth_stash* stash,
 	short isize = (short)(size*10.0f);
 	struct sth_font* fnt = NULL;
 	float x = 0, y = 0;
-	
+
+	*minx = *maxx = *miny = *maxy = 0;	/* @rlyeh: reset vars before failing */
+
 	if (stash == NULL) return;
 	if (!stash->textures || !stash->textures->id) return;
 	fnt = stash->fonts;
