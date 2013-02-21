@@ -107,7 +107,8 @@ struct sth_stash
 {
 	int tw,th;
 	float itw,ith;
-	struct sth_texture* textures;
+	struct sth_texture* tt_textures;
+	struct sth_texture* bm_textures;
 	struct sth_font* fonts;
 	int drawing;
 };
@@ -169,12 +170,13 @@ struct sth_stash* sth_create(int cachew, int cacheh)
 	stash->th = cacheh;
 	stash->itw = 1.0f/cachew;
 	stash->ith = 1.0f/cacheh;
-	stash->textures = texture;
+	stash->tt_textures = texture;
 	glGenTextures(1, &texture->id);
 	if (!texture->id) goto error;
 	glBindTexture(GL_TEXTURE_2D, texture->id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, stash->tw,stash->th, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	return stash;
 	
@@ -306,7 +308,7 @@ void sth_add_glyph(struct sth_stash* stash,
 	unsigned int state = 0;
 
 	if (stash == NULL) return;
-	texture = stash->textures;
+	texture = stash->bm_textures;
 	while (texture != NULL && texture->id != id) texture = texture->next;
 	if (texture == NULL)
 	{
@@ -315,8 +317,8 @@ void sth_add_glyph(struct sth_stash* stash,
 		if (texture == NULL) return;
 		memset(texture, 0, sizeof(struct sth_texture));
 		texture->id = id;
-		texture->next = stash->textures;
-		stash->textures = texture;
+		texture->next = stash->bm_textures;
+		stash->bm_textures = texture;
 	}
 
 	fnt = stash->fonts;
@@ -391,14 +393,14 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 	gw = x1-x0;
 	gh = y1-y0;
 	
-    // Check if glyph is larger than maximum texture size
+	// Check if glyph is larger than maximum texture size
 	if (gw >= stash->tw || gh >= stash->th)
 		return 0;
 
 	// Find texture and row where the glyph can be fit.
 	br = NULL;
 	rh = (gh+7) & ~7;
-	texture = stash->textures;
+	texture = stash->tt_textures;
 	while(br == NULL)
 	{
 		for (i = 0; i < texture->nrows; ++i)
@@ -436,6 +438,7 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 						glBindTexture(GL_TEXTURE_2D, texture->id);
 						glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, stash->tw,stash->th, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					}
 					continue;
 				}
@@ -484,7 +487,7 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 		// Update texture
 		glBindTexture(GL_TEXTURE_2D, texture->id);
 		glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, glyph->x0,glyph->y0, gw,gh, GL_ALPHA,GL_UNSIGNED_BYTE,bmp); 
+		glTexSubImage2D(GL_TEXTURE_2D, 0, glyph->x0,glyph->y0, gw,gh, GL_ALPHA,GL_UNSIGNED_BYTE,bmp);
 		free(bmp);
 	}
 	
@@ -532,7 +535,8 @@ static float* setv(float* v, float x, float y, float s, float t)
 
 static void flush_draw(struct sth_stash* stash)
 {
-	struct sth_texture* texture = stash->textures;
+	struct sth_texture* texture = stash->tt_textures;
+	short tt = 1;
 	while (texture)
 	{
 		if (texture->nverts > 0)
@@ -550,6 +554,11 @@ static void flush_draw(struct sth_stash* stash)
 			texture->nverts = 0;
 		}
 		texture = texture->next;
+		if (!texture && tt)
+		{
+			texture = stash->bm_textures;
+			tt = 0;
+		}
 	}
 }
 
@@ -605,7 +614,6 @@ void sth_draw_text(struct sth_stash* stash,
 	
 	if (stash == NULL) return;
 
-	if (!stash->textures) return;
 	fnt = stash->fonts;
 	while(fnt != NULL && fnt->idx != idx) fnt = fnt->next;
 	if (fnt == NULL) return;
@@ -654,7 +662,6 @@ void sth_dim_text(struct sth_stash* stash,
 	*minx = *maxx = *miny = *maxy = 0;	/* @rlyeh: reset vars before failing */
 
 	if (stash == NULL) return;
-	if (!stash->textures || !stash->textures->id) return;
 	fnt = stash->fonts;
 	while(fnt != NULL && fnt->idx != idx) fnt = fnt->next;
 	if (fnt == NULL) return;
@@ -683,7 +690,6 @@ void sth_vmetrics(struct sth_stash* stash,
 	struct sth_font* fnt = NULL;
 
 	if (stash == NULL) return;
-	if (!stash->textures || !stash->textures->id) return;
 	fnt = stash->fonts;
 	while(fnt != NULL && fnt->idx != idx) fnt = fnt->next;
 	if (fnt == NULL) return;
@@ -705,7 +711,16 @@ void sth_delete(struct sth_stash* stash)
 
 	if (!stash) return;
 
-	tex = stash->textures;
+	tex = stash->tt_textures;
+	while(tex != NULL) {
+		curtex = tex;
+		tex = tex->next;
+		if (curtex->id)
+			glDeleteTextures(1, &curtex->id);
+		free(curtex);
+	}
+
+	tex = stash->bm_textures;
 	while(tex != NULL) {
 		curtex = tex;
 		tex = tex->next;
