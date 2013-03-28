@@ -667,9 +667,6 @@ void sth_dim_text(struct sth_stash* stash,
 	if (fnt == NULL) return;
 	if (fnt->type != BMFONT && !fnt->data) return;
 	
-	*minx = *maxx = x;
-	*miny = *maxy = y;
-
 	for (; *s; ++s)
 	{
 		if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
@@ -681,6 +678,7 @@ void sth_dim_text(struct sth_stash* stash,
 		if (q.y1 < *miny) *miny = q.y1;
 		if (q.y0 > *maxy) *maxy = q.y0;
 	}
+	if (floorf(x) > *maxx) *maxx = floorf(x);
 }
 
 void sth_vmetrics(struct sth_stash* stash,
