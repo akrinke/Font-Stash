@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2011 Andreas Krinke andreas.krinke@gmx.de
+// Copyright (c) 2011-2013 Andreas Krinke andreas.krinke@gmx.de
 // Copyright (c) 2009 Mikko Mononen memon@inside.org
 //
 // This software is provided 'as-is', without any express or implied
@@ -107,6 +107,7 @@ struct sth_stash
 {
 	int tw,th;
 	float itw,ith;
+	GLubyte *empty_data;
 	struct sth_texture* tt_textures;
 	struct sth_texture* bm_textures;
 	struct sth_font* fonts;
@@ -153,12 +154,18 @@ static unsigned int decutf8(unsigned int* state, unsigned int* codep, unsigned i
 struct sth_stash* sth_create(int cachew, int cacheh)
 {
 	struct sth_stash* stash = NULL;
+	GLubyte* empty_data = NULL;
 	struct sth_texture* texture = NULL;
 
 	// Allocate memory for the font stash.
 	stash = (struct sth_stash*)malloc(sizeof(struct sth_stash));
 	if (stash == NULL) goto error;
 	memset(stash,0,sizeof(struct sth_stash));
+
+	// Create data for clearing the textures
+	empty_data = malloc(cachew * cacheh);
+	if (empty_data == NULL) goto error;
+	memset(empty_data, 0, cachew * cacheh);
 
 	// Allocate memory for the first texture
 	texture = (struct sth_texture*)malloc(sizeof(struct sth_texture));
@@ -170,11 +177,12 @@ struct sth_stash* sth_create(int cachew, int cacheh)
 	stash->th = cacheh;
 	stash->itw = 1.0f/cachew;
 	stash->ith = 1.0f/cacheh;
+	stash->empty_data = empty_data;
 	stash->tt_textures = texture;
 	glGenTextures(1, &texture->id);
 	if (!texture->id) goto error;
 	glBindTexture(GL_TEXTURE_2D, texture->id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, stash->tw,stash->th, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, cachew, cacheh, 0, GL_ALPHA, GL_UNSIGNED_BYTE, empty_data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -436,7 +444,7 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 						glGenTextures(1, &texture->id);
 						if (!texture->id) goto error;
 						glBindTexture(GL_TEXTURE_2D, texture->id);
-						glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, stash->tw,stash->th, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+						glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, stash->tw,stash->th, 0, GL_ALPHA, GL_UNSIGNED_BYTE, stash->empty_data);
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					}
@@ -737,5 +745,6 @@ void sth_delete(struct sth_stash* stash)
 			free(curfnt->data);
 		free(curfnt);
 	}
+	free(stash->empty_data);
 	free(stash);
 }
