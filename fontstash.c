@@ -555,7 +555,7 @@ static void flush_draw(struct sth_stash* stash)
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glVertexPointer(2, GL_FLOAT, VERT_STRIDE, texture->verts);
 			glTexCoordPointer(2, GL_FLOAT, VERT_STRIDE, texture->verts+2);
-			glDrawArrays(GL_TRIANGLES, 0, texture->nverts);
+			glDrawArrays(GL_QUADS, 0, texture->nverts);
 			glDisable(GL_TEXTURE_2D);
 			glDisableClientState(GL_VERTEX_ARRAY);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -633,7 +633,7 @@ void sth_draw_text(struct sth_stash* stash,
 		glyph = get_glyph(stash, fnt, codepoint, isize);
 		if (!glyph) continue;
 		texture = glyph->texture;
-		if (texture->nverts+6 >= VERT_COUNT)
+		if (texture->nverts+4 >= VERT_COUNT)
 			flush_draw(stash);
 		
 		if (!get_quad(stash, fnt, glyph, isize, &x, &y, &q)) continue;
@@ -643,12 +643,9 @@ void sth_draw_text(struct sth_stash* stash,
 		v = setv(v, q.x0, q.y0, q.s0, q.t0);
 		v = setv(v, q.x1, q.y0, q.s1, q.t0);
 		v = setv(v, q.x1, q.y1, q.s1, q.t1);
-
-		v = setv(v, q.x0, q.y0, q.s0, q.t0);
-		v = setv(v, q.x1, q.y1, q.s1, q.t1);
 		v = setv(v, q.x0, q.y1, q.s0, q.t1);
 		
-		texture->nverts += 6;
+		texture->nverts += 4;
 	}
 	
 	if (dx) *dx = x;
