@@ -191,6 +191,8 @@ struct sth_stash* sth_create(int cachew, int cacheh)
 error:
 	if (stash != NULL)
 		free(stash);
+	if (empty_data != NULL)
+		free(empty_data);
 	if (texture != NULL)
 		free(texture);
 	return NULL;
