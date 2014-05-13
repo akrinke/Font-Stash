@@ -303,18 +303,17 @@ error:
 	return 0;
 }
 
-void sth_add_glyph(struct sth_stash* stash,
-                  int idx,
-                  GLuint id,
-                  const char* s,
-                  short size, short base,
-                  int x, int y, int w, int h,
-                  float xoffset, float yoffset, float xadvance)
+void sth_add_glyph_for_codepoint(struct sth_stash* stash,
+                                 int idx,
+                                 GLuint id,
+                                 unsigned int codepoint,
+                                 short size, short base,
+                                 int x, int y, int w, int h,
+                                 float xoffset, float yoffset, float xadvance)
 {
 	struct sth_texture* texture = NULL;
 	struct sth_font* fnt = NULL;
 	struct sth_glyph* glyph = NULL;
-	unsigned int codepoint;
 	unsigned int state = 0;
 
 	if (stash == NULL) return;
@@ -336,12 +335,6 @@ void sth_add_glyph(struct sth_stash* stash,
 	if (fnt == NULL) return;
 	if (fnt->type != BMFONT) return;
 	
-	for (; *s; ++s)
-	{
-		if (!decutf8(&state, &codepoint, *(unsigned char*)s)) break;
-	}
-	if (state != UTF8_ACCEPT) return;
-
 	// Alloc space for new glyph.
 	fnt->nglyphs++;
 	fnt->glyphs = (struct sth_glyph *)realloc(fnt->glyphs, fnt->nglyphs*sizeof(struct sth_glyph)); /* @rlyeh: explicit cast needed in C++ */
@@ -366,6 +359,26 @@ void sth_add_glyph(struct sth_stash* stash,
 	// Insert char to hash lookup.
 	glyph->next = fnt->lut[h];
 	fnt->lut[h] = fnt->nglyphs-1;
+}
+
+inline void sth_add_glyph_for_char(struct sth_stash* stash,
+                                   int idx,
+                                   GLuint id,
+                                   const char* s,
+                                   short size, short base,
+                                   int x, int y, int w, int h,
+                                   float xoffset, float yoffset, float xadvance)
+{
+    unsigned int codepoint;
+	unsigned int state = 0;
+    
+    for (; *s; ++s)
+	{
+		if (!decutf8(&state, &codepoint, *(unsigned char*)s)) break;
+	}
+	if (state != UTF8_ACCEPT) return;
+    
+    sth_add_glyph_for_codepoint(stash, idx, id, codepoint, size, base, x, y, w, h, xoffset, yoffset, xadvance);
 }
 
 static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt, unsigned int codepoint, short isize)

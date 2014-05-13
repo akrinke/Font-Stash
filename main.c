@@ -120,20 +120,20 @@ int main(int argc, char *argv[])
 	if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
 	SDL_FreeSurface(surface);
 	dejavu = sth_add_bitmap_font(stash, 17, -4, 2);
-	sth_add_glyph(stash, dejavu, texture, "T", 18, 14, 363, 331, 10, 11, 0,  3, 10);
-	sth_add_glyph(stash, dejavu, texture, "h", 18, 14, 225, 382,  8, 11, 1,  3, 10);
-	sth_add_glyph(stash, dejavu, texture, "i", 18, 14, 478, 377,  2, 11, 1,  3,  4);
-	sth_add_glyph(stash, dejavu, texture, "s", 18, 14, 199, 455,  7,  8, 1,  6,  9);
-	sth_add_glyph(stash, dejavu, texture, " ", 18, 14,  66, 185,  1,  1, 0, 14,  5);
-	sth_add_glyph(stash, dejavu, texture, "a", 18, 14,  18, 459,  8,  8, 1,  6, 10);
-	sth_add_glyph(stash, dejavu, texture, "b", 18, 14, 198, 383,  8, 11, 1,  3, 10);
-	sth_add_glyph(stash, dejavu, texture, "t", 18, 14, 436, 377,  5, 11, 1,  3,  6);
-	sth_add_glyph(stash, dejavu, texture, "m", 18, 14, 494, 429, 12,  8, 2,  6, 16);
-	sth_add_glyph(stash, dejavu, texture, "p", 18, 14, 436, 353,  8, 11, 1,  6, 10);
-	sth_add_glyph(stash, dejavu, texture, "f", 18, 14, 442, 377,  5, 11, 1,  3,  7);
-	sth_add_glyph(stash, dejavu, texture, "o", 18, 14, 483, 438,  8,  8, 1,  6, 10);
-	sth_add_glyph(stash, dejavu, texture, "n", 18, 14,   0, 459,  8,  8, 1,  6, 10);
-	sth_add_glyph(stash, dejavu, texture, ".", 18, 14, 285, 476,  2,  3, 1, 11,  6);
+	sth_add_glyph_for_char(stash, dejavu, texture, "T", 18, 14, 363, 331, 10, 11, 0,  3, 10);
+	sth_add_glyph_for_char(stash, dejavu, texture, "h", 18, 14, 225, 382,  8, 11, 1,  3, 10);
+	sth_add_glyph_for_char(stash, dejavu, texture, "i", 18, 14, 478, 377,  2, 11, 1,  3,  4);
+	sth_add_glyph_for_char(stash, dejavu, texture, "s", 18, 14, 199, 455,  7,  8, 1,  6,  9);
+	sth_add_glyph_for_char(stash, dejavu, texture, " ", 18, 14,  66, 185,  1,  1, 0, 14,  5);
+	sth_add_glyph_for_char(stash, dejavu, texture, "a", 18, 14,  18, 459,  8,  8, 1,  6, 10);
+	sth_add_glyph_for_char(stash, dejavu, texture, "b", 18, 14, 198, 383,  8, 11, 1,  3, 10);
+	sth_add_glyph_for_char(stash, dejavu, texture, "t", 18, 14, 436, 377,  5, 11, 1,  3,  6);
+	sth_add_glyph_for_char(stash, dejavu, texture, "m", 18, 14, 494, 429, 12,  8, 2,  6, 16);
+	sth_add_glyph_for_char(stash, dejavu, texture, "p", 18, 14, 436, 353,  8, 11, 1,  6, 10);
+	sth_add_glyph_for_char(stash, dejavu, texture, "f", 18, 14, 442, 377,  5, 11, 1,  3,  7);
+	sth_add_glyph_for_char(stash, dejavu, texture, "o", 18, 14, 483, 438,  8,  8, 1,  6, 10);
+	sth_add_glyph_for_char(stash, dejavu, texture, "n", 18, 14,   0, 459,  8,  8, 1,  6, 10);
+	sth_add_glyph_for_char(stash, dejavu, texture, ".", 18, 14, 285, 476,  2,  3, 1, 11,  6);
 	
 	done = 0;
 	while (!done)
