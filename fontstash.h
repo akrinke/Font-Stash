@@ -20,18 +20,28 @@
 #ifndef FONTSTASH_H
 #define FONTSTASH_H
 
+#define STH_ESUCCESS 0
+// error opening file
+#define STH_EFILEIO -1
+// error initializing truetype font
+#define STH_ETTFINIT -2
+// invalid argument
+#define STH_EINVAL -3
+// not enough memory
+#define STH_ENOMEM -4
+
 struct sth_stash* sth_create(int cachew, int cacheh);
 
 int sth_add_font(struct sth_stash* stash, const char* path);
 int sth_add_font_from_memory(struct sth_stash* stash, unsigned char* buffer);
 
-int  sth_add_bitmap_font(struct sth_stash* stash, int ascent, int descent, int line_gap);
-void sth_add_glyph_for_codepoint(struct sth_stash* stash, int idx, GLuint id, unsigned int codepoint,  /* @rlyeh: function does not return int */
-                                 short size, short base, int x, int y, int w, int h,
-                                 float xoffset, float yoffset, float xadvance);
-void sth_add_glyph_for_char(struct sth_stash* stash, int idx, GLuint id, const char* s,  /* @rlyeh: function does not return int */
-                            short size, short base, int x, int y, int w, int h,
-                            float xoffset, float yoffset, float xadvance);
+int sth_add_bitmap_font(struct sth_stash* stash, int ascent, int descent, int line_gap);
+int sth_add_glyph_for_codepoint(struct sth_stash* stash, int idx, GLuint id, unsigned int codepoint,
+                                short size, short base, int x, int y, int w, int h,
+                                float xoffset, float yoffset, float xadvance);
+int sth_add_glyph_for_char(struct sth_stash* stash, int idx, GLuint id, const char* s,
+                           short size, short base, int x, int y, int w, int h,
+                           float xoffset, float yoffset, float xadvance);
 
 void sth_begin_draw(struct sth_stash* stash);
 void sth_end_draw(struct sth_stash* stash);
